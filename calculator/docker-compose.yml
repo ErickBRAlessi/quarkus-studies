@@ -26,30 +26,53 @@ services:
       - ${MONGODB_PORT}:27017
     volumes:
       - mongodb-db:${MONGODB_DATA}
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ${RABBIT_CONTAINER_NAME}
+    env_file: .env
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
     ports:
-      - 22181:2181
-  kafka:
-    image: confluentinc/cp-kafka:latest
+      - ${RABBIT_PORT}:5672
+      - ${RABBIT_CLIENT_PORT}:15672
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq/
+      - rabbitmq:/var/log/rabbitmq/
+  keycloak-postgresdb:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+  keycloak:
+    image: quay.io/keycloak/keycloak:20.0.3
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak-postgresdb
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: Pa55w0rd
+      #JDBC_PARAMS: "ssl=true"
+    ports:
+      - 9001:8080
+    command:
+      - start-dev
     depends_on:
-      - zookeeper
-    ports:
-      - 29092:29092
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      - keycloak-postgresdb
 
 volumes:
   postgres-db:
     driver: local
   mongodb-db:
+    driver: local
+  rabbitmq:
+    driver: local
+  postgres_data:
     driver: local
 

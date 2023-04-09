@@ -32,7 +32,7 @@ public class MyReactiveMessagingApplication {
      * Consume the message from the "words-in" channel, uppercase it and send it to the uppercase channel.
      * Messages come from the broker.
      **/
-    @Incoming("words-in")
+    @Incoming("words")
     @Outgoing("uppercase")
     public Message<String> toUpperCase(Message<String> message) {
         return message.withPayload(message.getPayload().toUpperCase());

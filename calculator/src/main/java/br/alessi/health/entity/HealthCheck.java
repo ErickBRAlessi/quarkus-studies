@@ -17,6 +17,6 @@ public class HealthCheck extends PanacheEntity {
     private LocalDateTime time;
     private HealthStatus postgres;
     private HealthStatus mongo;
-    private HealthStatus activeMQ;
+    private HealthStatus rabbitMQ;
 
 }
